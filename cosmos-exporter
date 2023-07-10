@@ -15,7 +15,7 @@ commander
   .option("-w, --wallet-address <value>")
   .option("--chain-id <value>")
   .option("--port <value>", "Listern port for exporter metrics", "4000")
-  .option("--name <value>", "project name")
+  .option("--project-name <value>", "project name")
   .option("--friendly-name <value>", "friendly name")
   .option("--network-type <value>", "<testnet> <mainnet>", "testnet")
   .parse(process.argv);
@@ -28,7 +28,7 @@ const child = fork("./source/index.js", [
   opts.operatorAddress,
   opts.walletAddress,
   opts.consensusAddress,
-  opts.name,
+  opts.ProjectName,
   opts.friendlyName,
   opts.networkType,
 ]);

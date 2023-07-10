@@ -35,7 +35,7 @@ const _settings = {
   operatorAddress: process.argv[5],
   walletAddress: process.argv[6],
   consensusAddress: process.argv[7],
-  name: process.argv[8],
+  projectName: process.argv[8],
   friendlyName: process.argv[9],  
   networkType: process.argv[10],
   

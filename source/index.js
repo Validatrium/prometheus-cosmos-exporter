@@ -41,6 +41,8 @@ const _settings = {
   
 };
 
+console.log( process.argv)
+
 const register = new Prometheus.Registry();
 register.setDefaultLabels({
   chain: _settings.chain,

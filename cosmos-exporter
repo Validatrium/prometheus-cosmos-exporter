@@ -28,7 +28,7 @@ const child = fork("./source/index.js", [
   opts.operatorAddress,
   opts.walletAddress,
   opts.consensusAddress,
-  opts.ProjectName,
+  opts.projectName,
   opts.friendlyName,
   opts.networkType,
 ]);

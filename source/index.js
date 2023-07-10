@@ -35,12 +35,18 @@ const _settings = {
   operatorAddress: process.argv[5],
   walletAddress: process.argv[6],
   consensusAddress: process.argv[7],
+  name: process.argv[7],
+  networkType: process.argv[8],
+  friendlyName: process.argv[9],
 };
 
 const register = new Prometheus.Registry();
 register.setDefaultLabels({
   chain: _settings.chain,
   port: _settings.port,
+  name: _settings.name,
+  friendlyName: _settings.friendlyName,
+  networkType: _settings.networkType,
 });
 Prometheus.collectDefaultMetrics({ register });
 

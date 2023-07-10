@@ -1,0 +1,28 @@
+#!/usr/bin/node
+
+const commander = require("commander");
+const { fork } = require("child_process");
+
+commander
+  .version("1.0.0", "-v, --version")
+  .usage("[OPTIONS]...")
+  .option("-a, --api <value>", "provide api link")
+  .option("-o, --operator-address <value>")
+  .option(
+    "-c, --consensus-address <value>",
+    "Run this on your validator node. To get validator consensus address: `gaia tendermint show-address`. This parameter required to get slashing information"
+  )
+  .option("-w, --wallet-address <value>")
+  .option("--chain-id <value>")
+  .option("--port <value>", "Listern port for exporter metrics", "4000")
+  .parse(process.argv);
+
+const opts = commander.opts();
+const child = fork("./source/index.js", [
+  opts.port,
+  opts.chainId,
+  opts.api,
+  opts.operatorAddress,
+  opts.walletAddress,
+  opts.consensusAddress,
+]);

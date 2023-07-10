@@ -45,7 +45,7 @@ const register = new Prometheus.Registry();
 register.setDefaultLabels({
   chain: _settings.chain,
   port: _settings.port,
-  name: _settings.name,
+  projectName: _settings.projectName,
   friendlyName: _settings.friendlyName,
   networkType: _settings.networkType,
 });

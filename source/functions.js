@@ -28,8 +28,7 @@ async function getChainSlashingParams(api) {
 }
 
 async function getBalance({ walletAddress, denom }, api) {
-  if ( !walletAddress || ! denom || !api )
-    return false;
+  if (!walletAddress || !denom || !api) return false;
 
   const url = `${api}/cosmos/bank/v1beta1/balances/${walletAddress}`;
   const req = await fetch(url);
@@ -37,30 +36,40 @@ async function getBalance({ walletAddress, denom }, api) {
 }
 
 async function getFilteredBalance({ walletAddress, denom, exponent }, api) {
-  const balance = await getBalance({ walletAddress, denom }, api )
-  return parseInt( balance / Math.pow( 10, exponent) )
+  const balance = await getBalance({ walletAddress, denom }, api);
+  return parseInt(balance / Math.pow(10, exponent));
 }
 
 async function getValidatorCommission(operatorAddress, api) {
   const url = `${api}/cosmos/distribution/v1beta1/validators/${operatorAddress}/commission`;
-  const req = await fetch(url)
-  return  req.data.commission.commission[0].amount 
+  const req = await fetch(url);
+  return req.data.commission.commission[0].amount;
 }
 
-async function getFilteredValidatorCommission({ operatorAddress, exponent}, api) {
-  const commission = await getValidatorCommission( operatorAddress, api)
-  return parseInt( commission / Math.pow( 10, exponent) )
+async function getFilteredValidatorCommission(
+  { operatorAddress, exponent },
+  api
+) {
+  const commission = await getValidatorCommission(operatorAddress, api);
+  return parseInt(commission / Math.pow(10, exponent));
 }
 
 async function getValidatorRewards(walletAddress, api) {
   const url = `${api}/cosmos/distribution/v1beta1/delegators/${walletAddress}/rewards`;
-  const req = await fetch(url)
-  return  req.data.rewards.reduce( (acc, validator) => acc + validator.reward[0].amount*1,0)
+  const req = await fetch(url);
+  return req.data.rewards.reduce(
+    (acc, validator) =>
+      validator.reward.length === 0
+        ? acc
+        : acc + validator.reward[0].amount * 1,
+
+    0
+  );
 }
 
-async function getFilteredValidatorRewards({ walletAddress, exponent}, api) {
-  const rewards = await getValidatorRewards( walletAddress, api)
-  return parseInt( rewards / Math.pow( 10, exponent) )
+async function getFilteredValidatorRewards({ walletAddress, exponent }, api) {
+  const rewards = await getValidatorRewards(walletAddress, api);
+  return parseInt(rewards / Math.pow(10, exponent));
 }
 
 module.exports = {
@@ -69,5 +78,5 @@ module.exports = {
   getChainInfo,
   getFilteredBalance,
   getFilteredValidatorRewards,
-  getFilteredValidatorCommission
+  getFilteredValidatorCommission,
 };

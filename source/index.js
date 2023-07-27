@@ -4,28 +4,60 @@ const app = express();
 const {
   getValidatorMissedBlocksBy,
   getChainSlashingParams,
+  getChainInfo,
+  getFilteredBalance,
+  getFilteredValidatorCommission,
+  getFilteredValidatorRewards
 } = require("./functions");
 
 function clearMetrics() {
   register.removeSingleMetric(validator_missed_blocks_counter);
   register.removeSingleMetric(chain_signed_blocks_window);
   register.removeSingleMetric(chain_min_signed_per_window);
+  register.removeSingleMetric(validator_wallet_balance_filtered);
+  register.removeSingleMetric(validator_available_rewards_filtered);
+  register.removeSingleMetric(validator_available_commission_filtered);
 }
 
 async function getMetrics() {
+
   const validatorMissedBlocks = await getValidatorMissedBlocksBy(
     _settings.consensusAddress,
     _settings.api
   );
 
-  const networkSlashingParams = await getChainSlashingParams( _settings.api )
+  const networkSlashingParams = await getChainSlashingParams(_settings.api);
+  
+  const validatorBalance = await getFilteredBalance({
+    walletAddress: _settings.walletAddress,
+    denom: _settings.denom,
+    exponent: _settings.exponent
+  }, _settings.api)
 
+  const validatorCommission = await getFilteredValidatorCommission({
+    operatorAddress: _settings.operatorAddress,
+    exponent: _settings.exponent
+  }, _settings.api)
+
+  const validatorRewards = await getFilteredValidatorRewards({
+    walletAddress: _settings.walletAddress,
+    exponent: _settings.exponent
+  }, _settings.api)
 
   validator_missed_blocks_counter
     .labels(_settings.consensusAddress)
     .set(validatorMissedBlocks);
-  chain_signed_blocks_window.labels({}).set(networkSlashingParams.signed_blocks_window);
-  chain_min_signed_per_window.labels({}).set(networkSlashingParams.min_signed_per_window);
+  chain_signed_blocks_window
+    .labels({})
+    .set(networkSlashingParams.signed_blocks_window);
+  chain_min_signed_per_window
+    .labels({})
+    .set(networkSlashingParams.min_signed_per_window);
+
+    validator_wallet_balance_filtered.labels(_settings.walletAddress).set(validatorBalance)
+    validator_available_commission_filtered.labels(_settings.operatorAddress).set(validatorCommission)
+    validator_available_rewards_filtered.labels(_settings.walletAddress).set(validatorRewards)
+    
 }
 
 const _settings = {
@@ -36,12 +68,22 @@ const _settings = {
   walletAddress: process.argv[6],
   consensusAddress: process.argv[7],
   projectName: process.argv[8],
-  friendlyName: process.argv[9],  
+  friendlyName: process.argv[9],
   networkType: process.argv[10],
-  
 };
+// gets chain info from CosmosChain Registry
+// denom, symbol, exponent
+const extendSettings = (async () => {
+  const result = await getChainInfo(_settings.projectName);
+  if (result === false)
+    return console.log(
+      "There is an error while connecting to cosmos chain registry.\nSome of functions could not work"
+    );
 
-console.log( process.argv)
+  _settings.denom = result.denom;
+  _settings.symbol = result.symbol;
+  _settings.exponent = result.decimals;
+})();
 
 const register = new Prometheus.Registry();
 register.setDefaultLabels({
@@ -74,6 +116,27 @@ const chain_min_signed_per_window = new Prometheus.Gauge({
 });
 register.registerMetric(chain_min_signed_per_window);
 
+const validator_wallet_balance_filtered = new Prometheus.Gauge({
+  name: 'validator_wallet_balance_filtered',
+  help: 'Show wallet balance as native coin. Withouth exponent',
+  labelNames: ['walletAddress']
+})
+register.registerMetric(validator_wallet_balance_filtered);
+
+const validator_available_commission_filtered = new Prometheus.Gauge({
+  name: 'validator_available_commission_filtered',
+  help: 'Show available commission. Withouth exponent',
+  labelNames: ['operatorAddress']
+})
+register.registerMetric(validator_available_commission_filtered);
+
+const validator_available_rewards_filtered = new Prometheus.Gauge({
+  name: 'validator_available_rewards_filtered',
+  help: 'Show available rewards. Withouth exponent',
+  labelNames: ['walletAddress']
+})
+register.registerMetric(validator_available_rewards_filtered);
+
 app.get("/metrics", async function (req, res) {
   // CLEAR METRICS
   clearMetrics();
@@ -83,39 +146,6 @@ app.get("/metrics", async function (req, res) {
   res.setHeader("Content-Type", register.contentType);
   register.metrics().then((data) => res.status(200).send(data));
 });
-
-// const getValConAddressBy =  async  valoper  => {
-// 	const url = '/validatorsets/latest'
-// 	const res = await fetch(`${API}${url}`)
-
-// 	//const pubKey = await res.data.validator.consensus_pubkey.key
-// 	const arr = res.data.result.validators
-
-// 	const a = arr.find( el =>
-// 		el.address == 'archwayvalcons1pdpl3p5wu70qw5zuje99nnw3qd035ecuvcj4gq'
-// 	)
-
-// 	console.log( a )
-
-// 	//const req = await fetch(`${API}/cosmos/slashing/v1beta1/signing_infos`)
-// 	//console.log( req )
-// }
-// getValConAddressBy(VALOPER)
-
-// const missedBlocksCounter = async() => {
-// 	//const address='archwayvalcons1anh88k26wljp5jkrzjxht0n6avpvc9rax2red0'
-// 	//const url1='/cosmos/slashing/v1beta1/signing_infos/'
-// 	//const a = await fetch(`${API}${url1}${address}`)
-// 	//console.log( a.data.val_signing_info.missed_blocks_counter )
-
-// 	const a = await fetch(`${RPC}/status`)
-// 	return a.data.result.sync_info.latest_block_height*1
-// }
-// //missedBlocksCounter()
-
-// app.get('/', (req, res) => {
-//   res.send(collectDefaultMetrics())
-// })
 
 app.listen(_settings.port, () => {
   console.log(`Example app listening on port ${_settings.port}`);

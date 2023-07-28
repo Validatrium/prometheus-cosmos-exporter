@@ -40,17 +40,22 @@ async function getFilteredBalance({ walletAddress, denom, exponent }, api) {
   return parseInt(balance / Math.pow(10, exponent));
 }
 
-async function getValidatorCommission(operatorAddress, api) {
+async function getValidatorCommission({ operatorAddress, denom }, api) {
   const url = `${api}/cosmos/distribution/v1beta1/validators/${operatorAddress}/commission`;
   const req = await fetch(url);
-  return req.data.commission.commission[0].amount;
+  return req.data.commission.commission.find(
+    (commission) => commission.denom == denom
+  ).amount;
 }
 
 async function getFilteredValidatorCommission(
-  { operatorAddress, exponent },
+  { operatorAddress, exponent, denom },
   api
 ) {
-  const commission = await getValidatorCommission(operatorAddress, api);
+  const commission = await getValidatorCommission(
+    { operatorAddress, denom },
+    api
+  );
   return parseInt(commission / Math.pow(10, exponent));
 }
 

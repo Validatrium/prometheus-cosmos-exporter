@@ -7,7 +7,7 @@ const {
   getChainInfo,
   getFilteredBalance,
   getFilteredValidatorCommission,
-  getFilteredValidatorRewards
+  getFilteredValidatorRewards,
 } = require("./functions");
 
 function clearMetrics() {
@@ -20,29 +20,38 @@ function clearMetrics() {
 }
 
 async function getMetrics() {
-
   const validatorMissedBlocks = await getValidatorMissedBlocksBy(
     _settings.consensusAddress,
     _settings.api
   );
 
   const networkSlashingParams = await getChainSlashingParams(_settings.api);
-  
-  const validatorBalance = await getFilteredBalance({
-    walletAddress: _settings.walletAddress,
-    denom: _settings.denom,
-    exponent: _settings.exponent
-  }, _settings.api)
 
-  const validatorCommission = await getFilteredValidatorCommission({
-    operatorAddress: _settings.operatorAddress,
-    exponent: _settings.exponent
-  }, _settings.api)
+  const validatorBalance = await getFilteredBalance(
+    {
+      walletAddress: _settings.walletAddress,
+      denom: _settings.denom,
+      exponent: _settings.exponent,
+    },
+    _settings.api
+  );
 
-  const validatorRewards = await getFilteredValidatorRewards({
-    walletAddress: _settings.walletAddress,
-    exponent: _settings.exponent
-  }, _settings.api)
+  const validatorCommission = await getFilteredValidatorCommission(
+    {
+      operatorAddress: _settings.operatorAddress,
+      exponent: _settings.exponent,
+      denom: _settings.denom,
+    },
+    _settings.api
+  );
+
+  const validatorRewards = await getFilteredValidatorRewards(
+    {
+      walletAddress: _settings.walletAddress,
+      exponent: _settings.exponent,
+    },
+    _settings.api
+  );
 
   validator_missed_blocks_counter
     .labels(_settings.consensusAddress)
@@ -54,10 +63,15 @@ async function getMetrics() {
     .labels({})
     .set(networkSlashingParams.min_signed_per_window);
 
-    validator_wallet_balance_filtered.labels(_settings.walletAddress).set(validatorBalance)
-    validator_available_commission_filtered.labels(_settings.operatorAddress).set(validatorCommission)
-    validator_available_rewards_filtered.labels(_settings.walletAddress).set(validatorRewards)
-    
+  validator_wallet_balance_filtered
+    .labels(_settings.walletAddress)
+    .set(validatorBalance);
+  validator_available_commission_filtered
+    .labels(_settings.operatorAddress)
+    .set(validatorCommission);
+  validator_available_rewards_filtered
+    .labels(_settings.walletAddress)
+    .set(validatorRewards);
 }
 
 const _settings = {
@@ -117,24 +131,24 @@ const chain_min_signed_per_window = new Prometheus.Gauge({
 register.registerMetric(chain_min_signed_per_window);
 
 const validator_wallet_balance_filtered = new Prometheus.Gauge({
-  name: 'validator_wallet_balance_filtered',
-  help: 'Show wallet balance as native coin. Withouth exponent',
-  labelNames: ['walletAddress']
-})
+  name: "validator_wallet_balance_filtered",
+  help: "Show wallet balance as native coin. Withouth exponent",
+  labelNames: ["walletAddress"],
+});
 register.registerMetric(validator_wallet_balance_filtered);
 
 const validator_available_commission_filtered = new Prometheus.Gauge({
-  name: 'validator_available_commission_filtered',
-  help: 'Show available commission. Withouth exponent',
-  labelNames: ['operatorAddress']
-})
+  name: "validator_available_commission_filtered",
+  help: "Show available commission. Withouth exponent",
+  labelNames: ["operatorAddress"],
+});
 register.registerMetric(validator_available_commission_filtered);
 
 const validator_available_rewards_filtered = new Prometheus.Gauge({
-  name: 'validator_available_rewards_filtered',
-  help: 'Show available rewards. Withouth exponent',
-  labelNames: ['walletAddress']
-})
+  name: "validator_available_rewards_filtered",
+  help: "Show available rewards. Withouth exponent",
+  labelNames: ["walletAddress"],
+});
 register.registerMetric(validator_available_rewards_filtered);
 
 app.get("/metrics", async function (req, res) {

@@ -4,7 +4,7 @@ const commander = require("commander");
 const { fork } = require("child_process");
 
 commander
-  .version("1.0.7-1", "-v, --version")
+  .version("1.0.8", "-v, --version")
   .usage("[OPTIONS]...")
   .option("-a, --api <value>", "provide api link")
   .option("-o, --operator-address <value>")
@@ -14,13 +14,63 @@ commander
   )
   .option("-w, --wallet-address <value>")
   .option("--chain-id <value>")
-  .option("--port <value>", "Listern port for exporter metrics", "4000")
+  .option("--port <value>", "Listen port for exporter metrics", "4000")
   .option("--project-name <value>", "project name")
   .option("--friendly-name <value>", "friendly name")
-  .option("--network-type <value>", "<testnet> <mainnet>", "testnet")
+  .option("--network-type <value>", "<testnet> <mainnet>", "mainnet")
+  .option("--denom <value>", "coin denom")
+  .option("--exponent <value>", "denom decimal", "6")
   .parse(process.argv);
 
 const opts = commander.opts();
+
+if (opts.api === undefined) {
+  console.log(`Api server must be provided. Exiting...`);
+  process.exit(1);
+}
+
+if (opts.operatorAddress === undefined) {
+  console.log(`Operator address must be provided. Exiting...`);
+  process.exit(1);
+}
+
+if (opts.consensusAddress === undefined) {
+  console.log(`Consensus address must be provided. Exiting...`);
+  process.exit(1);
+}
+
+if (opts.walletAddress === undefined) {
+  console.log(`Wallet address must be provided. Exiting...`);
+  process.exit(1);
+}
+
+if (opts.projectName === undefined) {
+  console.log(`Project name must be provided. Exiting...`);
+  process.exit(1);
+}
+
+if (opts.friendlyName === undefined) {
+  console.log(`Friendly name must be provided. Exiting...`);
+  process.exit(1);
+}
+
+if (opts.denom === undefined) {
+  console.log(`Denom must be provided. Exiting...`);
+  process.exit(1);
+}
+
+console.log(`========Starting exporter:========`);
+console.log(`Project name: ${opts.projectName}`);
+console.log(`Friendly name: ${opts.friendlyName}`);
+console.log(`Chain id: ${opts.chainId}`);
+console.log(`Operator address: ${opts.operatorAddress}`);
+console.log(`Wallet address: ${opts.walletAddress}`);
+console.log(`Consensus address: ${opts.consensusAddress}`);
+console.log(`Api server: ${opts.api}`);
+console.log(`Network type: ${opts.networkType}`);
+console.log(`Denom: ${opts.denom}`);
+console.log(`Exponent: ${opts.exponent}`);
+
 const child = fork("./source/index.js", [
   opts.port,
   opts.chainId,
@@ -31,4 +81,6 @@ const child = fork("./source/index.js", [
   opts.projectName,
   opts.friendlyName,
   opts.networkType,
+  opts.denom,
+  opts.exponent,
 ]);

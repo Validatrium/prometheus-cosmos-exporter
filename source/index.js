@@ -1,10 +1,10 @@
 const express = require("express");
 const Prometheus = require("prom-client");
+const fetch = require("axios");
 const app = express();
 const {
   getValidatorMissedBlocksBy,
   getChainSlashingParams,
-  getChainInfo,
   getFilteredBalance,
   getFilteredValidatorCommission,
   getFilteredValidatorRewards,
@@ -75,7 +75,7 @@ async function getMetrics() {
 }
 
 const _settings = {
-  port: process.argv[2],
+  port: process.argv[2] || 4000,
   chain: process.argv[3],
   api: process.argv[4],
   operatorAddress: process.argv[5],
@@ -83,21 +83,10 @@ const _settings = {
   consensusAddress: process.argv[7],
   projectName: process.argv[8],
   friendlyName: process.argv[9],
-  networkType: process.argv[10],
+  networkType: process.argv[10] || "mainnet",
+  denom: process.argv[11],
+  exponent: process.argv[12] || 6,
 };
-// gets chain info from CosmosChain Registry
-// denom, symbol, exponent
-const extendSettings = (async () => {
-  const result = await getChainInfo(_settings.projectName);
-  if (result === false)
-    return console.log(
-      "There is an error while connecting to cosmos chain registry.\nSome of functions could not work"
-    );
-
-  _settings.denom = result.denom;
-  _settings.symbol = result.symbol;
-  _settings.exponent = result.decimals;
-})();
 
 const register = new Prometheus.Registry();
 register.setDefaultLabels({
@@ -161,6 +150,23 @@ app.get("/metrics", async function (req, res) {
   register.metrics().then((data) => res.status(200).send(data));
 });
 
+const onStart = (async () => {
+  try {
+    const url = `${_settings.api}//cosmos/auth/v1beta1/params`;
+    const req = await fetch(url);
+  } catch (err) {
+    if (err.errno == -3008) {
+      console.log("Unable to connect to api server. Exiting...");
+      process.exit(1);
+    }
+    console.log(
+      `API server response: ${err.response.status} for link: ${err.config.url}`
+    );
+    console.log(`Unable to use API server. Exiting...`);
+    process.exit(1);
+  }
+})();
+
 app.listen(_settings.port, () => {
-  console.log(`Example app listening on port ${_settings.port}`);
+  console.log(`========Exporter started on port: ${_settings.port}========`);
 });

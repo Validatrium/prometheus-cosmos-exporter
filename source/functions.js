@@ -1,16 +1,5 @@
 const fetch = require("axios");
 
-async function getChainInfo(projectName) {
-  const url = `https://chains.cosmos.directory/${projectName}`;
-  try {
-    const req = await fetch(url);
-    return req.data.chain;
-  } catch (e) {
-    console.log("ERROR CONNECTING COSMOS REGISTRY: ", e.code, e.config.url);
-    return false;
-  }
-}
-
 async function getValidatorMissedBlocksBy(consensusAddress, api) {
   const url = `${api}/cosmos/slashing/v1beta1/signing_infos/${consensusAddress}`;
   const req = await fetch(url);
@@ -80,7 +69,6 @@ async function getFilteredValidatorRewards({ walletAddress, exponent }, api) {
 module.exports = {
   getValidatorMissedBlocksBy,
   getChainSlashingParams,
-  getChainInfo,
   getFilteredBalance,
   getFilteredValidatorRewards,
   getFilteredValidatorCommission,

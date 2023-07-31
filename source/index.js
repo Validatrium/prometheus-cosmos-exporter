@@ -49,6 +49,7 @@ async function getMetrics() {
     {
       walletAddress: _settings.walletAddress,
       exponent: _settings.exponent,
+      denom: _settings.denom
     },
     _settings.api
   );

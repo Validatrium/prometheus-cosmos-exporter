@@ -48,21 +48,14 @@ async function getFilteredValidatorCommission(
   return parseInt(commission / Math.pow(10, exponent));
 }
 
-async function getValidatorRewards(walletAddress, api) {
+async function getValidatorRewards({walletAddress,denom}, api) {
   const url = `${api}/cosmos/distribution/v1beta1/delegators/${walletAddress}/rewards`;
   const req = await fetch(url);
-  return req.data.rewards.reduce(
-    (acc, validator) =>
-      validator.reward.length === 0
-        ? acc
-        : acc + validator.reward[0].amount * 1,
-
-    0
-  );
+  return req.data.total.reduce( (acc, reward ) => reward.denom==denom?acc+=reward.amount*1:false, 0) 
 }
 
-async function getFilteredValidatorRewards({ walletAddress, exponent }, api) {
-  const rewards = await getValidatorRewards(walletAddress, api);
+async function getFilteredValidatorRewards({ walletAddress, exponent,denom }, api) {
+  const rewards = await getValidatorRewards({walletAddress, denom}, api);
   return parseInt(rewards / Math.pow(10, exponent));
 }
 

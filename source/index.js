@@ -8,6 +8,12 @@ const {
   getFilteredBalance,
   getFilteredValidatorCommission,
   getFilteredValidatorRewards,
+  getLatestBlockTime,
+  getValidatorBond,
+  getNetworkMaxValidatorsCount,
+  getValidatorRankByOperatorAddress,
+  getValidatorIsActive,
+  getValidatorIsJailed,
 } = require("./functions");
 
 function clearMetrics() {
@@ -24,8 +30,11 @@ async function getMetrics() {
     _settings.consensusAddress,
     _settings.api
   );
-
   const networkSlashingParams = await getChainSlashingParams(_settings.api);
+  const networkLatestBlockTime = await getLatestBlockTime(_settings.api);
+  const networkMaxValidatorsCount = await getNetworkMaxValidatorsCount(
+    _settings.api
+  );
 
   const validatorBalance = await getFilteredBalance(
     {
@@ -35,7 +44,14 @@ async function getMetrics() {
     },
     _settings.api
   );
-
+  const validatorRewards = await getFilteredValidatorRewards(
+    {
+      walletAddress: _settings.walletAddress,
+      exponent: _settings.exponent,
+      denom: _settings.denom,
+    },
+    _settings.api
+  );
   const validatorCommission = await getFilteredValidatorCommission(
     {
       operatorAddress: _settings.operatorAddress,
@@ -45,12 +61,25 @@ async function getMetrics() {
     _settings.api
   );
 
-  const validatorRewards = await getFilteredValidatorRewards(
+  const validatorBond = await getValidatorBond(
     {
-      walletAddress: _settings.walletAddress,
+      operatorAddress: _settings.operatorAddress,
       exponent: _settings.exponent,
-      denom: _settings.denom
     },
+    _settings.api
+  );
+  const validatorIsActive = await getValidatorIsActive(
+    _settings.operatorAddress,
+    _settings.api
+  );
+
+  const validatorIsJailed = await getValidatorIsJailed(
+    _settings.operatorAddress,
+    _settings.api
+  );
+
+  const validatorRank = await getValidatorRankByOperatorAddress(
+    _settings.operatorAddress,
     _settings.api
   );
 
@@ -73,6 +102,14 @@ async function getMetrics() {
   validator_available_rewards_filtered
     .labels(_settings.walletAddress)
     .set(validatorRewards);
+
+  network_latest_block_time.labels({}).set(networkLatestBlockTime);
+
+  network_max_validators.labels({}).set(networkMaxValidatorsCount);
+  validator_is_active.labels(_settings.operatorAddress).set(validatorIsActive);
+  validator_is_jailed.labels(_settings.operatorAddress).set(validatorIsJailed);
+  validator_rank.labels(_settings.operatorAddress).set(validatorRank);
+  validator_bond.labels(_settings.operatorAddress).set(validatorBond);
 }
 
 const _settings = {
@@ -140,6 +177,45 @@ const validator_available_rewards_filtered = new Prometheus.Gauge({
   labelNames: ["walletAddress"],
 });
 register.registerMetric(validator_available_rewards_filtered);
+
+const network_latest_block_time = new Prometheus.Gauge({
+  name: "network_latest_block_time",
+  help: "Show timestamp when the latest block was signed",
+  labelNames: [],
+});
+register.registerMetric(network_latest_block_time);
+
+const validator_is_active = new Prometheus.Gauge({
+  name: "validator_is_active",
+  help: "Show if the validator is active",
+  labelNames: ["operatorAddress"],
+});
+register.registerMetric(validator_is_active);
+
+const validator_is_jailed = new Prometheus.Gauge({
+  name: "validator_is_jailed",
+  help: "Show if the validator is jailed",
+  labelNames: ["operatorAddress"],
+});
+register.registerMetric(validator_is_jailed);
+const validator_bond = new Prometheus.Gauge({
+  name: "validator_bond",
+  help: "show total staked tokens on validator",
+  labelNames: ["operatorAddress"],
+});
+register.registerMetric(validator_bond);
+const network_max_validators = new Prometheus.Gauge({
+  name: "network_max_validators",
+  help: "show max validators from network params",
+  labelNames: [],
+});
+register.registerMetric(network_max_validators);
+const validator_rank = new Prometheus.Gauge({
+  name: "validator_rank",
+  help: "show current validator rank",
+  labelNames: ["operatorAddress"],
+});
+register.registerMetric(validator_rank);
 
 app.get("/metrics", async function (req, res) {
   // CLEAR METRICS

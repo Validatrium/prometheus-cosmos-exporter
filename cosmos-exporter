@@ -4,7 +4,7 @@ const commander = require("commander");
 const { fork } = require("child_process");
 
 commander
-  .version("1.1.0", "-v, --version")
+  .version("1.1.1", "-v, --version")
   .usage("[OPTIONS]...")
   .option("-a, --api <value>", "provide api link")
   .option("-o, --operator-address <value>")

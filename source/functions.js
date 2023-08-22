@@ -111,9 +111,18 @@ async function getValidatorRankByOperatorAddress(operatorAddress, api) {
 }
 
 async function getActiveProposals(api) {
-  const url = `${api}/cosmos/gov/v1beta1/proposals?pagination.limit=5&pagination.reverse=true`;
-  const req = await fetch(url);
-  //console.log( req.data )
+  let req;
+  try {
+    // for some reasons, sometimes you need to use ".../v1/.." instead of ../v1beta1/...
+    const url = `${api}/cosmos/gov/v1beta1/proposals?pagination.limit=5&pagination.reverse=true`;
+    req = await fetch(url);
+  } catch (e) {
+    if (e.response.data.message.includes("gov/v1 Proposal to gov/v1beta1")) {
+      const url = `${api}/cosmos/gov/v1/proposals?pagination.limit=5&pagination.reverse=true`;
+      req = await fetch(url);
+    }
+  }
+
   const output = [];
   const filtered = req.data.proposals.filter((prop) => {
     if (

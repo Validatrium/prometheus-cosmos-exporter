@@ -14,6 +14,7 @@ const {
   getValidatorRankByOperatorAddress,
   getValidatorIsActive,
   getValidatorIsJailed,
+  getAddressVotes,
 } = require("./functions");
 
 function clearMetrics() {
@@ -83,6 +84,11 @@ async function getMetrics() {
     _settings.api
   );
 
+  const addressVotes = await getAddressVotes(
+    _settings.walletAddress,
+    _settings.api
+  );
+
   validator_missed_blocks_counter
     .labels(_settings.consensusAddress)
     .set(validatorMissedBlocks);
@@ -110,6 +116,27 @@ async function getMetrics() {
   validator_is_jailed.labels(_settings.operatorAddress).set(validatorIsJailed);
   validator_rank.labels(_settings.operatorAddress).set(validatorRank);
   validator_bond.labels(_settings.operatorAddress).set(validatorBond);
+
+  addressVotes.forEach((prop) => {
+    const {
+      proposal_id,
+      title,
+      status,
+      voting_start_time,
+      voting_end_time,
+      answer,
+    } = prop;
+    validator_vote_on_proposal
+      .labels(
+        _settings.walletAddress,
+        title,
+        status,
+        voting_start_time,
+        voting_end_time,
+        answer
+      )
+      .set(proposal_id * 1);
+  });
 }
 
 const _settings = {
@@ -216,6 +243,20 @@ const validator_rank = new Prometheus.Gauge({
   labelNames: ["operatorAddress"],
 });
 register.registerMetric(validator_rank);
+
+const validator_vote_on_proposal = new Prometheus.Gauge({
+  name: "validator_vote_on_proposal",
+  help: "show proposal id and validator answer",
+  labelNames: [
+    "walletAddress",
+    "title",
+    "status",
+    "voting_start_time",
+    "voting_end_time",
+    "answer",
+  ],
+});
+register.registerMetric(validator_vote_on_proposal);
 
 app.get("/metrics", async function (req, res) {
   // CLEAR METRICS

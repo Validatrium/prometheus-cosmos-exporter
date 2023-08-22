@@ -110,6 +110,54 @@ async function getValidatorRankByOperatorAddress(operatorAddress, api) {
   return index + 1;
 }
 
+async function getActiveProposals(api) {
+  const url = `${api}/cosmos/gov/v1beta1/proposals?pagination.limit=5&pagination.reverse=true`;
+  const req = await fetch(url);
+  //console.log( req.data )
+  const output = [];
+  const filtered = req.data.proposals.filter((prop) => {
+    if (
+      prop.status == "PROPOSAL_STATUS_VOTING_PERIOD" ||
+      prop.status == "PROPOSAL_STATUS_DEPOSIT_PERIOD"
+    )
+      output.push({
+        proposal_id: prop.proposal_id,
+        title: prop.content.title,
+        status: prop.status,
+        voting_start_time: prop.voting_start_time,
+        voting_end_time: prop.voting_end_time,
+      });
+    return true;
+  });
+  return output;
+}
+
+async function getAddressVoteOnProposal({ proposal_id, walletAddress }, api) {
+  try {
+    const url = `${api}/cosmos/gov/v1beta1/proposals/${proposal_id}/votes/${walletAddress}`;
+    const req = await fetch(url);
+    return req.data.vote.options[0].option;
+  } catch (e) {
+    if (e.response.data.message.includes("not found"))
+      return "VOTE_OPTION_NULL";
+  }
+}
+
+async function getAddressVotes(walletAddress, api) {
+  const activeProposals = await getActiveProposals(api);
+  for (let prop of activeProposals) {
+    if (prop.status == "PROPOSAL_STATUS_VOTING_PERIOD") {
+      const answer = await getAddressVoteOnProposal(
+        { proposal_id: prop.proposal_id, walletAddress },
+        api
+      );
+      prop.answer = answer;
+    }
+  }
+
+  return activeProposals;
+}
+
 module.exports = {
   getValidatorMissedBlocksBy,
   getChainSlashingParams,
@@ -122,4 +170,5 @@ module.exports = {
   getValidatorRankByOperatorAddress,
   getValidatorIsActive,
   getValidatorIsJailed,
+  getAddressVotes,
 };

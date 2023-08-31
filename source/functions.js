@@ -147,7 +147,6 @@ async function getActiveProposals(api) {
         voting_start_time: prop.voting_start_time,
         voting_end_time: prop.voting_end_time,
       });
-      console.log(output);
     }
 
     return true;

@@ -130,9 +130,15 @@ async function getActiveProposals(api) {
       prop.status == "PROPOSAL_STATUS_VOTING_PERIOD" ||
       prop.status == "PROPOSAL_STATUS_DEPOSIT_PERIOD"
     ) {
-      // the same fix as above
+      // the same fix as above. Well, proposals with no title exists as well..
       let title;
-      prop.content==undefined?title=prop.messages[0].content.title:title=prop.content.title
+      try {
+        prop.content == undefined
+          ? (title = prop.messages[0].content.title)
+          : (title = prop.content.title);
+      } catch (e) {
+        title = "Untitled Vote";
+      }
 
       output.push({
         proposal_id: prop.proposal_id || prop.id,
@@ -141,8 +147,9 @@ async function getActiveProposals(api) {
         voting_start_time: prop.voting_start_time,
         voting_end_time: prop.voting_end_time,
       });
+      console.log(output);
     }
-      
+
     return true;
   });
   return output;

@@ -1,4 +1,5 @@
 const fetch = require("axios");
+const e = require("express");
 
 async function getValidatorMissedBlocksBy(consensusAddress, api) {
   const url = `${api}/cosmos/slashing/v1beta1/signing_infos/${consensusAddress}`;
@@ -128,14 +129,20 @@ async function getActiveProposals(api) {
     if (
       prop.status == "PROPOSAL_STATUS_VOTING_PERIOD" ||
       prop.status == "PROPOSAL_STATUS_DEPOSIT_PERIOD"
-    )
+    ) {
+      // the same fix as above
+      let title;
+      prop.content==undefined?title=prop.messages[0].content.title:title=prop.content.title
+
       output.push({
-        proposal_id: prop.proposal_id,
-        title: prop.content.title,
+        proposal_id: prop.proposal_id || prop.id,
+        title: title,
         status: prop.status,
         voting_start_time: prop.voting_start_time,
         voting_end_time: prop.voting_end_time,
       });
+    }
+      
     return true;
   });
   return output;

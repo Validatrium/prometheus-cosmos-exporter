@@ -1,6 +1,6 @@
 {
   "name": "validatrium-cosmos-exporter",
-  "version": "1.1.4",
+  "version": "1.1.6",
   "description": "Custom prometheus exporter for tendermint project",
   "main": "app.js",
   "author": "Validatrium",

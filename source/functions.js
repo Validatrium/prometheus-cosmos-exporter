@@ -133,9 +133,12 @@ async function getActiveProposals(api) {
       // the same fix as above. Well, proposals with no title exists as well..
       let title;
       try {
-        prop.content == undefined
-          ? (title = prop.messages[0].content.title)
-          : (title = prop.content.title);
+        if (prop.content == undefined) {
+          console.log(prop.title);
+          prop.title == undefined
+            ? (title = prop.messages[0].content.title)
+            : (title = prop.title);
+        } else title = prop.content.title;
       } catch (e) {
         title = "Untitled Vote";
       }
@@ -160,7 +163,11 @@ async function getAddressVoteOnProposal({ proposal_id, walletAddress }, api) {
     const req = await fetch(url);
     return req.data.vote.options[0].option;
   } catch (e) {
-    if (e.response.data.message.includes("not found"))
+    const data = e.response.data;
+    if (data.message && data.message.includes("not found"))
+      return "VOTE_OPTION_NULL";
+
+    if (data.error.message && data.error.message.includes("Parse error"))
       return "VOTE_OPTION_NULL";
   }
 }
